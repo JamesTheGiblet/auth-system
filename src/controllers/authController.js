@@ -43,6 +43,76 @@ exports.register = async (req, res, next) => {
   }
 };
 
+// @desc    Forgot password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    // 1. Get user based on POSTed email
+    const user = await User.findOne({ email: req.body.email });
+
+    // 2. If user doesn't exist, send generic success message to prevent email enumeration
+    if (!user) {
+      return res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+    }
+
+    // 3. Generate the random reset token
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false }); // Disable validation to save without a password
+
+    // 4. Send it to user's email
+    try {
+      await sendPasswordResetEmail(user.email, resetToken);
+      res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+    } catch (emailError) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      return next(new AppError('There was an error sending the email. Please try again later.', 500));
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res, next) => {
+  try {
+    // 1. Get user based on the token
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.body.token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() }
+    });
+
+    // 2. If token has not expired, and there is a user, set the new password
+    if (!user) {
+      return next(new AppError('Token is invalid or has expired.', 400));
+    }
+
+    // 3. Set new password and clear reset token fields
+    user.password = req.body.password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    // The pre-save middleware will hash the new password
+    await user.save();
+
+    // 4. Log the user in (optional, but good UX) and send JWT
+    // For simplicity, we'll just send a success message.
+    // A full implementation might log them in here.
+
+    res.status(200).json({ message: 'Password has been reset successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Refresh access token
 // @route   POST /api/auth/refresh-token
 // @access  Public (requires a valid refresh token cookie)
