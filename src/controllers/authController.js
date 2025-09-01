@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { sendVerificationEmail } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
 const AppError = require('../utils/AppError');
 const crypto = require('crypto');
 const { generateAccessToken, generateRefreshToken, verifyToken } = require('../utils/jwt');
@@ -11,22 +11,20 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // 1. Check if a user with the provided email already exists
+    // 1. Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return next(new AppError('Email is already registered.', 409));
+      return next(new AppError('A user with this email already exists.', 409));
     }
 
-    // 2. Create a new user instance
+    // 2. Create new user (password will be hashed by the pre-save hook)
     const user = new User({
-      name: name,
-      email: email,
-      password: password
+      name,
+      email,
+      password,
     });
-    // 3. Generate verification token using your own implementation
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
-    user.emailVerificationExpires = Date.now() + 60 * 60 * 1000; // 1 hour expiry
+    // 3. Generate verification token using the model method
+    const verificationToken = user.createEmailVerificationToken();
     await user.save();
 
     // 4. Send verification email
