@@ -6,6 +6,8 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const sessionConfig = require('./src/middleware/session');
+const AppError = require('./src/utils/AppError');
+const globalErrorHandler = require('./src/controllers/errorController');
 
 const app = express();
 
@@ -43,6 +45,14 @@ app.use('/api/admin', require('./src/routes/admin'));
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// Catch-all for unhandled routes - must be after all other routes
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// Global error handling middleware
+app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -1,83 +1,72 @@
-// src/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Please provide your name'],
+    trim: true
+  },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Please provide an email'],
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    match: [/\S+@\S+\.\S+/, 'Please provide a valid email address']
   },
   password: {
     type: String,
-    required: true,
-    minlength: 6
+    required: [true, 'Please provide a password'],
+    minlength: 8,
+    select: false // Do not send password field back in queries by default
   },
-  firstName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  lastName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin', 'moderator'],
-    default: 'user'
-  },
-  permissions: [{
-    type: String,
-    enum: ['read', 'write', 'delete', 'manage_users']
-  }],
   isVerified: {
     type: Boolean,
     default: false
   },
-  verificationToken: String,
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
-  lastLogin: Date,
-  loginAttempts: {
-    type: Number,
-    default: 0
+  roles: {
+    type: [String],
+    enum: ['user', 'admin'],
+    default: ['user']
   },
-  lockUntil: Date
-}, {
-  timestamps: true
-});
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+}, { timestamps: true });
 
+// Middleware to hash password before saving
 userSchema.pre('save', async function(next) {
+  // Only run this function if password was actually modified
   if (!this.isModified('password')) return next();
+
+  // Hash the password with a cost of 12
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
+// Method to generate email verification token
+userSchema.methods.createEmailVerificationToken = function() {
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+
+  this.emailVerificationToken = crypto
+    .createHash('sha256')
+    .update(verificationToken)
+    .digest('hex');
+
+  this.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // Token expires in 10 minutes
+
+  return verificationToken;
+};
+
+// Method to compare candidate password with the user's hashed password
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  // Note: this.password is only available on documents where it was explicitly selected
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.virtual('isLocked').get(function() {
-  return !!(this.lockUntil && this.lockUntil > Date.now());
-});
+const User = mongoose.model('User', userSchema);
 
-userSchema.methods.incrementLoginAttempts = function() {
-  if (this.lockUntil && this.lockUntil < Date.now()) {
-    return this.update({
-      $set: { loginAttempts: 1 },
-      $unset: { lockUntil: 1 }
-    });
-  }
-  
-  const updates = { $inc: { loginAttempts: 1 } };
-  if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
-    updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 }; // 2 hours
-  }
-  return this.update(updates);
-};
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;
