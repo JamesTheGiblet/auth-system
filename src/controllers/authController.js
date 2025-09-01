@@ -11,21 +11,22 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // 1. Check if user already exists
+    // 1. Check if a user with the provided email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return next(new AppError('A user with this email already exists.', 409)); // 409 Conflict
+      return next(new AppError('Email is already registered.', 409));
     }
 
-    // 2. Create new user (password will be hashed by the pre-save hook)
+    // 2. Create a new user instance
     const user = new User({
-      name,
-      email,
-      password
+      name: name,
+      email: email,
+      password: password
     });
-
-    // 3. Generate verification token
-    const verificationToken = user.createEmailVerificationToken();
+    // 3. Generate verification token using your own implementation
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    user.emailVerificationExpires = Date.now() + 60 * 60 * 1000; // 1 hour expiry
     await user.save();
 
     // 4. Send verification email
