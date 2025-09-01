@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const sessionConfig = require('./src/middleware/session');
+const cookieParser = require('cookie-parser');
 const AppError = require('./src/utils/AppError');
 const globalErrorHandler = require('./src/controllers/errorController');
 
@@ -27,6 +28,7 @@ app.use(limiter);
 
 // Body parsing middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // Session middleware

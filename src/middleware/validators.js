@@ -6,6 +6,11 @@ exports.validateRegister = [
   check('password', 'Password must be 8 or more characters').isLength({ min: 8 })
 ];
 
+exports.validateLogin = [
+  check('email', 'Please include a valid email').isEmail().normalizeEmail(),
+  check('password', 'Password is required').exists()
+];
+
 exports.handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

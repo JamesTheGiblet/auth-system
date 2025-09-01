@@ -26,12 +26,16 @@ const authenticateToken = async (req, res, next) => {
 };
 
 const requireRole = (roles) => {
+  // The 'roles' parameter should be an array of allowed roles, e.g., ['admin']
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Check if the user's roles array has at least one of the required roles.
+    const hasRequiredRole = req.user.roles.some(role => roles.includes(role));
+
+    if (!hasRequiredRole) {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
 
@@ -39,22 +43,24 @@ const requireRole = (roles) => {
   };
 };
 
-const requirePermission = (permission) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
+// const requirePermission = (permission) => {
+//   return (req, res, next) => {
+//     if (!req.user) {
+//       return res.status(401).json({ message: 'Authentication required' });
+//     }
 
-    if (!req.user.permissions.includes(permission)) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
-    }
+//     // This will fail as the User model does not have a 'permissions' field.
+//     // This feature can be implemented later by adding a permissions array to the User schema.
+//     if (!req.user.permissions.includes(permission)) {
+//       return res.status(403).json({ message: 'Insufficient permissions' });
+//     }
 
-    next();
-  };
-};
+//     next();
+//   };
+// };
 
 module.exports = {
   authenticateToken,
   requireRole,
-  requirePermission
+  // requirePermission
 };
