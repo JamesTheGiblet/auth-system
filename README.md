@@ -174,12 +174,17 @@ auth-system/
 
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `PORT` | Server port | No | 3000 |
-| `MONGODB_URI` | MongoDB connection string | Yes | - |
-| `JWT_SECRET` | Secret key for JWT tokens | Yes | - |
-| `SENDGRID_API_KEY` | SendGrid API key for emails | No | - |
-| `FRONTEND_URL` | Frontend URL for CORS | No | <http://localhost:3001> |
-| `NODE_ENV` | Environment mode | No | development |
+| `PORT` | The port the server will run on. | No | `3000` |
+| `MONGODB_URI` | Your MongoDB connection string. | Yes | - |
+| `SESSION_SECRET` | A long, random string for securing sessions. | Yes | - |
+| `JWT_SECRET` | Secret key for signing access tokens. | Yes | - |
+| `JWT_REFRESH_SECRET` | Secret key for signing refresh tokens. | Yes | - |
+| `FRONTEND_URL` | The URL of your frontend application for CORS. | Yes | `http://localhost:5173` |
+| `EMAIL_HOST` | Hostname of your SMTP server. | No | - |
+| `EMAIL_PORT` | Port of your SMTP server. | No | - |
+| `EMAIL_USER` | Username for your SMTP server. | No | - |
+| `EMAIL_PASS` | Password for your SMTP server. | No | - |
+| `NODE_ENV` | The application environment. | No | `development` |
 
 ## Security Features
 

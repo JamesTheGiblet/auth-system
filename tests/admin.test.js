@@ -87,6 +87,36 @@ describe('Admin API - /api/admin', () => {
       expect(res.body.pagination).toHaveProperty('next');
       expect(res.body.pagination).toHaveProperty('prev');
     });
+
+    it('should filter users by a search query on name', async () => {
+      const res = await request(app)
+        .get('/api/admin/users?search=Admin')
+        .set('Authorization', `Bearer ${adminUserToken}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.total).toBe(1);
+      expect(res.body.users[0].name).toBe('Admin User');
+    });
+
+    it('should filter users by a search query on email', async () => {
+      const res = await request(app)
+        .get('/api/admin/users?search=user@example.com')
+        .set('Authorization', `Bearer ${adminUserToken}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.total).toBe(1);
+      expect(res.body.users[0].email).toBe('user@example.com');
+    });
+
+    it('should return an empty array if search query matches no users', async () => {
+      const res = await request(app)
+        .get('/api/admin/users?search=nonexistent')
+        .set('Authorization', `Bearer ${adminUserToken}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.total).toBe(0);
+      expect(res.body.users.length).toBe(0);
+    });
   });
 
   describe('DELETE /users/:id', () => {

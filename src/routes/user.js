@@ -1,7 +1,7 @@
 const express = require('express');
-const { getMe, updatePassword } = require('../controllers/userController');
+const { getMe, updatePassword, updateMe } = require('../controllers/userController');
 const { authenticateToken } = require('../middleware/auth');
-const { validateChangePassword, handleValidationErrors } = require('../middleware/validators');
+const { validateChangePassword, validateUpdateProfile, handleValidationErrors } = require('../middleware/validators');
 
 const router = express.Router();
 
@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/me', getMe);
+router.put('/me', validateUpdateProfile, handleValidationErrors, updateMe);
 router.put('/update-password', validateChangePassword, handleValidationErrors, updatePassword);
 
 module.exports = router;

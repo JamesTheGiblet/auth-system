@@ -6,14 +6,26 @@ const AppError = require('../utils/AppError');
 // @access  Private/Admin
 exports.getAllUsers = async (req, res, next) => {
   try {
+    // Build query object
+    let query = {};
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      query = {
+        $or: [
+          { name: searchRegex },
+          { email: searchRegex }
+        ]
+      };
+    }
+
     // Pagination
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
 
-    const total = await User.countDocuments();
-    const users = await User.find({}).skip(startIndex).limit(limit);
+    const total = await User.countDocuments(query);
+    const users = await User.find(query).skip(startIndex).limit(limit);
 
     // Pagination result metadata
     const pagination = {};

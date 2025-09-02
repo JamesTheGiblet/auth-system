@@ -26,6 +26,11 @@ exports.validateChangePassword = [
   check('newPassword', 'New password must be 8 or more characters').isLength({ min: 8 })
 ];
 
+exports.validateUpdateProfile = [
+  check('name').optional().not().isEmpty().withMessage('Name cannot be empty.').trim().escape(),
+  check('email').optional().isEmail().withMessage('Please provide a valid email.').normalizeEmail()
+];
+
 exports.validateUpdateRoles = [
   check('roles')
     .isArray({ min: 1 }).withMessage('Roles must be an array with at least one role.')

@@ -32,3 +32,30 @@ exports.updatePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Update user profile (name, email)
+// @route   PUT /api/users/me
+// @access  Private
+exports.updateMe = async (req, res, next) => {
+  try {
+    const { name, email } = req.body;
+
+    // Check if the new email is already taken by another user
+    if (email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser && existingUser._id.toString() !== req.user.id) {
+        return next(new AppError('This email is already in use.', 409));
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { name, email },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({ message: 'Profile updated successfully.', user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};

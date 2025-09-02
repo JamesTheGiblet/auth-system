@@ -95,4 +95,62 @@ describe('User API - /api/users', () => {
       expect(res.body.errors[0].message).toBe('New password must be 8 or more characters');
     });
   });
+
+  describe('PUT /me', () => {
+    const userData = {
+      name: 'Update User',
+      email: 'update@example.com',
+      password: 'password123',
+    };
+    let accessToken;
+
+    beforeEach(async () => {
+      // Create a user and log them in before each test
+      await User.create({ ...userData, isVerified: true });
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ email: userData.email, password: userData.password });
+      accessToken = loginRes.body.accessToken;
+    });
+
+    it('should update the user name successfully', async () => {
+      const newName = 'Updated Name';
+      const res = await request(app)
+        .put('/api/users/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ name: newName });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.user.name).toBe(newName);
+    });
+
+    it('should update the user email successfully', async () => {
+      const newEmail = 'new.update@example.com';
+      const res = await request(app)
+        .put('/api/users/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ email: newEmail });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.user.email).toBe(newEmail);
+    });
+
+    it('should return 409 if the new email is already taken', async () => {
+      // Create a second user whose email we will try to take
+      await User.create({
+        name: 'Other User',
+        email: 'other@example.com',
+        password: 'password123',
+        isVerified: true,
+      });
+
+      const res = await request(app)
+        .put('/api/users/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ email: 'other@example.com' });
+
+      expect(res.statusCode).toEqual(409);
+      expect(res.body.message).toBe('This email is already in use.');
+    });
+  });
 });
