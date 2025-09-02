@@ -113,6 +113,8 @@ This project provides a **robust, secure, and drop-in solution** for user authen
 ### User Routes
 
 `GET /api/users/me` - Get the profile of the currently authenticated user.
+`PUT /api/users/me` - Update the current user's profile (name, email).
+`PUT /api/users/update-password` - Change the current user's password.
 
 ## Usage Examples
 

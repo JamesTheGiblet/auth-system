@@ -90,10 +90,9 @@ describe('Auth API - /api/auth', () => {
     };
 
     // beforeEach is used to set up a common state before each test in this block
-    let verifiedUser;
     beforeEach(async () => {
       // Create a user and manually mark them as verified for login tests
-      verifiedUser = await User.create({ ...userData, isVerified: true });
+      await User.create({ ...userData, isVerified: true });
     });
 
     it('should log in a verified user successfully and return tokens', async () => {
@@ -214,8 +213,6 @@ describe('Auth API - /api/auth', () => {
     };
 
     beforeEach(async () => {
-      // Clear mocks before each test in this block
-      sendPasswordResetEmail.mockClear();
       // Create a user for the tests
       await User.create({ ...userData, isVerified: true });
     });
