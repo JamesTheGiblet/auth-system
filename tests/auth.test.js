@@ -5,6 +5,11 @@ const User = require('../src/models/User');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../src/utils/email');
 
 describe('Auth API - /api/auth', () => {
+  beforeEach(() => {
+    // Clear all mocks before each test to ensure isolation
+    sendVerificationEmail.mockClear();
+    sendPasswordResetEmail.mockClear();
+  });
   
   describe('POST /register', () => {
     const validUserData = {

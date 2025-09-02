@@ -39,4 +39,60 @@ describe('User API - /api/users', () => {
       expect(profileRes.body.user).not.toHaveProperty('password');
     });
   });
+
+  describe('PUT /update-password', () => {
+    const userData = {
+      name: 'ChangePw User',
+      email: 'changepw@example.com',
+      password: 'oldPassword123',
+    };
+    const newPassword = 'newPassword456';
+    let accessToken;
+
+    beforeEach(async () => {
+      // Create a user and log them in before each test in this block
+      await User.create({ ...userData, isVerified: true });
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ email: userData.email, password: userData.password });
+      accessToken = loginRes.body.accessToken;
+    });
+
+    it('should update the password successfully with correct current password', async () => {
+      const res = await request(app)
+        .put('/api/users/update-password')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ currentPassword: userData.password, newPassword });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.message).toBe('Password updated successfully.');
+
+      // Verify by logging in with the new password
+      const loginWithNewPwRes = await request(app)
+        .post('/api/auth/login')
+        .send({ email: userData.email, password: newPassword });
+      
+      expect(loginWithNewPwRes.statusCode).toEqual(200);
+    });
+
+    it('should return 401 if the current password is incorrect', async () => {
+      const res = await request(app)
+        .put('/api/users/update-password')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ currentPassword: 'wrongpassword', newPassword });
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.body.message).toBe('Your current password is incorrect');
+    });
+
+    it('should return 400 if the new password is too short', async () => {
+      const res = await request(app)
+        .put('/api/users/update-password')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ currentPassword: userData.password, newPassword: 'short' });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.errors[0].message).toBe('New password must be 8 or more characters');
+    });
+  });
 });

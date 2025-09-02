@@ -1,68 +1,95 @@
 # Auth System
 
-A modern authentication system built with Node.js, Express, and MongoDB, featuring JWT-based authentication with comprehensive security measures.
+**A production-ready, secure, and feature-complete authentication backend designed to accelerate your development process.**
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)
+![License](https://img.shields.io/badge/license-ISC-blue.svg?style=for-the-badge)
+
+---
+
+## The Problem
+
+Building authentication is a critical but often repetitive and complex task. Developers frequently spend weeks implementing features like secure user registration, password hashing, token management, and email verification. It's easy to introduce security vulnerabilities, and this boilerplate work takes valuable time away from building the core features that make your application unique.
+
+## The Solution
+
+This project provides a **robust, secure, and drop-in solution** for user authentication. It handles the entire authentication lifecycle, from registration and secure login to password resets and email verification, allowing you to focus on your application's primary goals. By integrating this system, you get a production-ready auth layer built on modern best practices.
+
+## Key Benefits
+
+- **🚀 Accelerate Development:** Integrate a full authentication system in minutes, not weeks. Skip the boilerplate and get straight to building your app's core functionality.
+- **🛡️ Enhance Security:** Built with security as a priority, featuring password hashing (bcrypt), secure JWTs with refresh tokens, rate limiting, CORS protection, and security headers via Helmet.js.
+- **✅ Feature-Complete:** All the essential features are ready out-of-the-box, including registration, login, logout, email verification, and a secure password reset flow.
+- **🧪 Fully Tested:** A comprehensive test suite using Jest and Supertest ensures the system is reliable, stable, and ready for production.
 
 ## Features
 
-- 🔐 **JWT Authentication** - Secure token-based authentication system
+- 🔐 **JWT Authentication** - Secure, stateless authentication using JSON Web Tokens with a refresh token rotation strategy.
 - 🛡️ **Security Features**:
   - Password hashing with bcrypt
-  - Rate limiting on login attempts
+  - Rate limiting to prevent brute-force attacks
   - CORS protection
   - Helmet.js for security headers
-- 📧 **Email Verification** - SendGrid integration for user verification
+- 📧 **Email Verification** - Nodemailer integration for user verification and password reset emails.
 - 🔒 **Password Management**:
   - Secure password reset functionality
-  - Password strength validation
+  - Password strength validation on registration
 - 🗄️ **MongoDB Integration** - Mongoose ODM for data modeling
-- 🧪 **Testing** - Comprehensive test suite with Jest
+- 🧪 **Testing** - Comprehensive test suite with Jest & Supertest.
 - 📦 **Environment Configuration** - Easy configuration with dotenv
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v18 or higher recommended)
 - MongoDB (local or cloud instance)
-- SendGrid account (for email functionality)
+- An SMTP server or email service (like Gmail, SendGrid, etc.) for email functionality.
 - Git
 
 ## Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/JamesTheGiblet/auth-system.git
    cd auth-system
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+   Copy the example environment file:
+
    ```bash
-   cp .env.example .env
+   copy .env.example .env
    ```
-   
-   Edit `.env` with your configuration:
+
+   Edit the new `.env` file with your configuration:
+
    ```env
    PORT=3000
    MONGODB_URI=mongodb://localhost:27017/auth-system
+   SESSION_SECRET=your-super-secret-and-long-random-string-for-sessions
    JWT_SECRET=your-super-secret-jwt-key
-   SENDGRID_API_KEY=your-sendgrid-api-key
-   FRONTEND_URL=http://localhost:3001
+   JWT_REFRESH_SECRET=your-refresh-token-secret
+   FRONTEND_URL=http://localhost:5173
    NODE_ENV=development
-   ```
-
-4. **Start MongoDB** (if using local instance)
-   ```bash
-   # Using brew on macOS
-   brew services start mongodb/brew/mongodb-community
    
-   # Or using systemctl on Linux
-   sudo systemctl start mongod
+   # Email Credentials
+   EMAIL_HOST=smtp.example.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@example.com
+   EMAIL_PASS=your-email-password
    ```
 
-5. **Start the application**
+4. **Start the application**
+
    ```bash
    # Development mode
    npm run dev
@@ -74,32 +101,35 @@ A modern authentication system built with Node.js, Express, and MongoDB, featuri
 ## API Endpoints
 
 ### Authentication Routes
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/verify-email/:token` - Verify email address
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password/:token` - Reset password
+
+`POST /api/auth/register` - Register a new user.
+`POST /api/auth/login` - Log in a user and receive tokens.
+`POST /api/auth/logout` - Log out a user by clearing the refresh token cookie.
+`POST /api/auth/refresh-token` - Get a new access token using a valid refresh token.
+`GET /api/auth/verify-email` - Verify a user's email with a token from the query string (`?token=...`).
+`POST /api/auth/forgot-password` - Request a password reset email.
+`POST /api/auth/reset-password` - Reset a password using a token sent in the request body.
 
 ### User Routes
-- `GET /api/users/me` - Get current user profile
-- `PUT /api/users/me` - Update user profile
-- `DELETE /api/users/me` - Delete user account
+
+`GET /api/users/me` - Get the profile of the currently authenticated user.
 
 ## Usage Examples
 
 ### Register a new user
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "johndoe",
+    "name": "John Doe",
     "email": "john@example.com",
     "password": "SecurePassword123!"
   }'
 ```
 
 ### User login
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -110,28 +140,22 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 ### Get user profile (authenticated)
+
 ```bash
 curl -X GET http://localhost:3000/api/users/me \
-  -H "Authorization: Bearer <your-jwt-token>"
+  -H "Authorization: Bearer {your-access-token}"
 ```
 
 ## Testing
 
-Run the test suite:
+Run the complete test suite with:
+
 ```bash
-# Run all tests
 npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
 ```
 
 ## Project Structure
 
-```
 auth-system/
 ├── src/
 │   ├── controllers/     # Route controllers
@@ -145,7 +169,6 @@ auth-system/
 ├── .env.example        # Environment variables template
 ├── package.json
 └── README.md
-```
 
 ## Environment Variables
 
@@ -155,7 +178,7 @@ auth-system/
 | `MONGODB_URI` | MongoDB connection string | Yes | - |
 | `JWT_SECRET` | Secret key for JWT tokens | Yes | - |
 | `SENDGRID_API_KEY` | SendGrid API key for emails | No | - |
-| `FRONTEND_URL` | Frontend URL for CORS | No | http://localhost:3001 |
+| `FRONTEND_URL` | Frontend URL for CORS | No | <http://localhost:3001> |
 | `NODE_ENV` | Environment mode | No | development |
 
 ## Security Features
