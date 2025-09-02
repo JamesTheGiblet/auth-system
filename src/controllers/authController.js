@@ -143,6 +143,20 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Public
+exports.logout = (req, res) => {
+  // To log out, we clear the refresh token cookie.
+  res.cookie('refreshToken', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: new Date(0) // Set expiry to a past date
+  });
+  res.status(200).json({ message: 'Logout successful' });
+};
+
 // @desc    Login a user
 // @route   POST /api/auth/login
 // @access  Public
